@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shipment Details (Pending AWB)</title>
+  <title>Shipment Details</title>
   <style>
     :root { --bg:#0b1220; --card:#121b2f; --muted:#9fb0d0; --text:#e9f0ff; --line:#223154; --accent:#4f8cff; --warn:#ffcc66; }
     body{ margin:0; font-family: Arial, sans-serif; background:linear-gradient(180deg,#0b1220,#070b14); color:var(--text); }
@@ -12,4 +12,339 @@
     .brand{ font-size: 18px; }
     .pill{ background:#0f1730; border:1px solid var(--line); padding:8px 10px; border-radius:999px; color:var(--muted); font-size:13px; }
     .grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap:14px; }
-    @media (max-width: 920px){ .grid{ grid-template-columns
+    @media (max-width: 920px){ .grid{ grid-template-columns:1fr; } }
+    .card{ background:rgba(18,27,47,.92); border:1px solid var(--line); border-radius:14px; padding:14px; }
+    h2{ margin:0 0 10px; font-size:16px; color:#dbe6ff; }
+    label{ display:block; margin-top:10px; color:var(--muted); font-size:13px; }
+    input, textarea, select{
+      width:100%; box-sizing:border-box; margin-top:6px; padding:11px 12px;
+      border-radius:10px; border:1px solid var(--line); background:#0e1630; color:var(--text);
+      outline:none;
+    }
+    textarea{ min-height: 90px; resize: vertical; }
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    @media (max-width: 520px){ .row{ grid-template-columns:1fr; } }
+    .btns{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+    button{
+      border:0; border-radius:10px; padding:11px 12px; cursor:pointer; font-weight:700;
+      background:var(--accent); color:#06102a;
+    }
+    .btn2{ background:#0f1730; color:var(--text); border:1px solid var(--line); font-weight:600; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    .hint{ color:var(--muted); font-size:12px; line-height: 1.5; margin-top:8px; }
+    .banner{
+      border:1px solid var(--line); background:#0f1730; border-radius:12px; padding:10px 12px; margin: 10px 0 0;
+      color:var(--warn);
+    }
+    .kpi{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .kpi .box{ background:#0f1730; border:1px solid var(--line); border-radius:12px; padding:12px; }
+    .kpi .t{ font-size:12px; color:var(--muted); }
+    .kpi .v{ margin-top:6px; font-size:14px; }
+    .big{ grid-column: 1 / -1; }
+    .line{ height:1px; background:var(--line); margin: 12px 0; }
+    .badge{ display:inline-block; border:1px solid var(--line); background:#0e1630; padding:6px 10px; border-radius:999px; color:var(--muted); font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">Shipment Details Portal</div>
+      <div class="pill">Carrier: DHL • Tracking: <span id="trackingState">Pending AWB</span></div>
+    </div>
+
+    <div class="grid">
+      <!-- Admin panel (hidden in customer mode) -->
+      <div class="card" id="adminPanel">
+        <h2>Admin: Fill shipment details</h2>
+
+        <label>Shipper name</label>
+        <input id="shipper" placeholder="e.g., Ellen Leslie / Ann Sherri" />
+
+        <div class="row">
+          <div>
+            <label>Customer name</label>
+            <input id="cust" placeholder="e.g., MARTY BOUGHTON" />
+          </div>
+          <div>
+            <label>Customer phone</label>
+            <input id="phone" placeholder="e.g., 4173650845" />
+          </div>
+        </div>
+
+        <label>Destination address</label>
+        <textarea id="dest" placeholder="Street, City, State, Postal code, Country"></textarea>
+
+        <div class="row">
+          <div>
+            <label>Service type</label>
+            <select id="service">
+              <option value="">Select</option>
+              <option value="EXPRESS">EXPRESS</option>
+              <option value="ECONOMY">ECONOMY</option>
+            </select>
+          </div>
+          <div>
+            <label>Status (manual)</label>
+            <select id="status">
+              <option value="PENDING_AWB">PENDING AWB</option>
+              <option value="BOOKED">Booked (AWB expected)</option>
+              <option value="PICKED_UP">Picked up</option>
+              <option value="IN_TRANSIT">In transit</option>
+              <option value="OUT_FOR_DELIVERY">Out for delivery</option>
+              <option value="DELIVERED">Delivered</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Pickup date</label>
+            <input id="pickup" placeholder="18/12/2025" />
+          </div>
+          <div>
+            <label>Estimated delivery date (ETA)</label>
+            <input id="eta" placeholder="19/12/2025" />
+          </div>
+        </div>
+
+        <label>Notes / special instructions</label>
+        <textarea id="notes" placeholder="HANDLE PACKAGE WITH CARE"></textarea>
+
+        <div class="line"></div>
+
+        <h2>Tracking IDs</h2>
+
+        <label>DHL AWB / Tracking number (leave empty if not available)</label>
+        <input id="awb" class="mono" placeholder="e.g., 1234567890" />
+
+        <label>Internal reference (optional)</label>
+        <input id="ref" class="mono" placeholder="e.g., MAR839Q632" />
+
+        <div class="btns">
+          <button id="makeLink" type="button">Generate customer link</button>
+          <button class="btn2" id="copyLink" type="button">Copy link</button>
+          <button class="btn2" id="openDhl" type="button" style="display:none;">Track on DHL</button>
+        </div>
+
+        <label>Customer URL</label>
+        <input id="out" class="mono" readonly />
+
+        <div class="hint">
+          Your customer link uses the URL query string via <span class="mono">URLSearchParams</span>. [web:67]
+        </div>
+      </div>
+
+      <!-- Customer card -->
+      <div class="card" id="customerPanel">
+        <h2>Shipment card</h2>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="t">Shipper</div>
+            <div class="v" id="vShipper">—</div>
+          </div>
+          <div class="box">
+            <div class="t">Service</div>
+            <div class="v"><span class="badge" id="vService">—</span></div>
+          </div>
+
+          <div class="box big">
+            <div class="t">Destination</div>
+            <div class="v" id="vDest">—</div>
+          </div>
+
+          <div class="box">
+            <div class="t">Customer</div>
+            <div class="v" id="vCust">—</div>
+          </div>
+          <div class="box">
+            <div class="t">Phone</div>
+            <div class="v mono" id="vPhone">—</div>
+          </div>
+
+          <div class="box">
+            <div class="t">Pickup date</div>
+            <div class="v" id="vPickup">—</div>
+          </div>
+          <div class="box">
+            <div class="t">ETA</div>
+            <div class="v" id="vEta">—</div>
+          </div>
+
+          <div class="box big">
+            <div class="t">Status</div>
+            <div class="v" id="vStatus">—</div>
+          </div>
+
+          <div class="box big">
+            <div class="t">DHL AWB</div>
+            <div class="v mono" id="vAwb">—</div>
+          </div>
+
+          <div class="box big">
+            <div class="t">Internal reference</div>
+            <div class="v mono" id="vRef">—</div>
+          </div>
+        </div>
+
+        <div id="pendingBanner" class="banner" style="display:none;">
+          Tracking is not active yet because DHL AWB is not available. This page shows shipment details; tracking will activate once the AWB is added.
+        </div>
+
+        <div class="line"></div>
+
+        <div class="hint" id="vNotes">Notes: —</div>
+
+        <div class="btns" style="margin-top:12px;">
+          <button id="customerTrack" type="button" style="display:none;">Track on DHL</button>
+          <button class="btn2" id="customerCopyAwb" type="button" style="display:none;">Copy AWB</button>
+          <button class="btn2" id="customerCopyRef" type="button">Copy reference</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const setText = (id, value, fallback="—") => $(id).textContent = value ? value : fallback;
+
+    // Customer-mode rule:
+    // If the URL has ANY query params, assume it was opened from a customer link and hide Admin.
+    function isCustomerMode() {
+      const p = new URLSearchParams(location.search); // URLSearchParams [web:67]
+      return [...p.keys()].length > 0;
+    }
+
+    function openDhl(awb) {
+      if (!awb) return;
+      const url =
+        "https://www.dhl.com/global-en/home/tracking/tracking-express.html?submit=1&tracking-id=" +
+        encodeURIComponent(awb);
+      window.open(url, "_blank");
+    }
+
+    function buildCustomerUrl() {
+      const base = location.origin + location.pathname;
+      const u = new URL(base);
+      const p = u.searchParams; // URLSearchParams [web:67]
+      const fields = ["shipper","cust","phone","dest","service","pickup","eta","notes","status","awb","ref"];
+      for (const k of fields) {
+        const v = $(k).value.trim();
+        if (v) p.set(k, v); else p.delete(k);
+      }
+      return u.toString();
+    }
+
+    function renderFromUrl() {
+      const p = new URLSearchParams(location.search); // URLSearchParams [web:67]
+
+      const shipper = p.get("shipper") || "";
+      const cust = p.get("cust") || "";
+      const phone = p.get("phone") || "";
+      const dest = p.get("dest") || "";
+      const service = p.get("service") || "";
+      const pickup = p.get("pickup") || "";
+      const eta = p.get("eta") || "";
+      const notes = p.get("notes") || "";
+      const status = p.get("status") || "PENDING_AWB";
+      const awb = p.get("awb") || "";
+      const ref = p.get("ref") || "";
+
+      // Fill admin inputs if present (useful when you open a customer link yourself)
+      for (const [k,v] of [["shipper",shipper],["cust",cust],["phone",phone],["dest",dest],["service",service],["pickup",pickup],["eta",eta],["notes",notes],["status",status],["awb",awb],["ref",ref]]) {
+        if (v) $(k).value = v;
+      }
+
+      // Customer card
+      setText("vShipper", shipper);
+      setText("vCust", cust);
+      setText("vPhone", phone);
+      setText("vDest", dest);
+      setText("vService", service);
+      setText("vPickup", pickup);
+      setText("vEta", eta);
+      setText("vStatus", status.replaceAll("_"," "));
+      setText("vAwb", awb);
+      setText("vRef", ref);
+      $("vNotes").textContent = "Notes: " + (notes ? notes : "—");
+
+      // Tracking gating
+      const awbAvailable = !!awb;
+      $("trackingState").textContent = awbAvailable ? "AWB Available" : "Pending AWB";
+      $("pendingBanner").style.display = awbAvailable ? "none" : "block";
+      $("openDhl").style.display = awbAvailable ? "inline-block" : "none";
+      $("customerTrack").style.display = awbAvailable ? "inline-block" : "none";
+      $("customerCopyAwb").style.display = awbAvailable ? "inline-block" : "none";
+    }
+
+    // Buttons
+    $("makeLink").addEventListener("click", () => {
+      const url = buildCustomerUrl();
+      $("out").value = url;
+      history.replaceState(null, "", url);
+      renderFromUrl();
+      if (isCustomerMode()) { $("adminPanel").style.display = "none"; }
+    });
+
+    $("copyLink").addEventListener("click", async () => {
+      if (!$("out").value) $("out").value = buildCustomerUrl();
+      await navigator.clipboard.writeText($("out").value);
+      $("copyLink").textContent = "Copied";
+      setTimeout(() => $("copyLink").textContent = "Copy link", 900);
+    });
+
+    $("openDhl").addEventListener("click", () => openDhl($("awb").value.trim()));
+    $("customerTrack").addEventListener("click", () => {
+      const awb = new URLSearchParams(location.search).get("awb") || $("awb").value.trim();
+      openDhl(awb);
+    });
+
+    $("customerCopyAwb").addEventListener("click", async () => {
+      const awb = new URLSearchParams(location.search).get("awb") || $("awb").value.trim();
+      if (!awb) return;
+      await navigator.clipboard.writeText(awb);
+      $("customerCopyAwb").textContent = "Copied";
+      setTimeout(() => $("customerCopyAwb").textContent = "Copy AWB", 900);
+    });
+
+    $("customerCopyRef").addEventListener("click", async () => {
+      const ref = new URLSearchParams(location.search).get("ref") || $("ref").value.trim();
+      if (!ref) return;
+      await navigator.clipboard.writeText(ref);
+      $("customerCopyRef").textContent = "Copied";
+      setTimeout(() => $("customerCopyRef").textContent = "Copy reference", 900);
+    });
+
+    // Seed only when opening WITHOUT query params (admin view)
+    function seedIfNoUrl() {
+      const p = new URLSearchParams(location.search);
+      if ([...p.keys()].length) return;
+
+      $("shipper").value = "Ellen Leslie / Ann Sherri";
+      $("cust").value = "MARTY BOUGHTON";
+      $("phone").value = "4173650845";
+      $("dest").value = "1600, BIRD ROAD, APT 101, BRANSON MO, 65616";
+      $("service").value = "EXPRESS";
+      $("pickup").value = "18/12/2025";
+      $("eta").value = "19/12/2025";
+      $("notes").value = "HANDLE PACKAGE WITH CARE";
+      $("status").value = "PENDING_AWB";
+      $("awb").value = "";
+      $("ref").value = "MAR839Q632";
+    }
+
+    // Init
+    seedIfNoUrl();
+    $("out").value = buildCustomerUrl();
+    history.replaceState(null, "", $("out").value);
+    renderFromUrl();
+
+    // Mode switch
+    if (isCustomerMode()) {
+      $("adminPanel").style.display = "none";
+      // Make customer card full width
+      document.querySelector(".grid").style.gridTemplateColumns = "1fr";
+    }
+  </script>
+</body>
+</html>
